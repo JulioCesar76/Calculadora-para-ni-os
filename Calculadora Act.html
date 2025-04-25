@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multiplica con Amigos</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(to right, #ff9a9e, #fad0c4);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #ff007f;
+      font-size: 36px;
+      text-shadow: 2px 2px white;
+    }
+    .card {
+      background-color: #fff200;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .card.correct {
+      animation: pop 0.3s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .question {
+      font-size: 26px;
+      margin: 20px 0;
+      color: #d000ff;
+    }
+    .character {
+      font-size: 60px;
+    }
+    input[type="number"] {
+      font-size: 22px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid #ff007f;
+      width: 100px;
+      margin-top: 10px;
+      background-color: #fff;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 20px;
+      background-color: #00f5d4;
+      border: none;
+      border-radius: 12px;
+      color: black;
+      cursor: pointer;
+      box-shadow: 0 4px #0c0c0c;
+    }
+    button:hover {
+      background-color: #00e0b0;
+    }
+    .feedback {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .score, .highscore, .timer, .corrects {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #0004ff;
+    }
+    .timer {
+      color: #ff0000;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎲 Multiplica con Amigos 🎉</h1>
+  <div class="timer" id="timer">⏱️ Tiempo: 60s</div>
+  <div class="score" id="score">Puntos: 0</div>
+  <div class="corrects" id="corrects">✔️ Aciertos: 0</div>
+  <div class="highscore" id="highscore">🏆 Récord: 0</div>
+  <div class="card" id="card">
+    <div class="character" id="character">🦄</div>
+    <div class="question" id="question">¿Cuánto es 2 × 3?</div>
+    <input type="number" id="answer" placeholder="Tu respuesta" />
+    <br/>
+    <button onclick="checkAnswer()">Verificar</button>
+    <div class="feedback" id="feedback"></div>
+  </div>
+  <button onclick="startGame()" style="margin-top: 20px;" id="startBtn">🔁 Reiniciar Juego</button>
+
+  <audio id="sound-correct" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_b6f1b2a7b3.mp3?filename=correct-2-46134.mp3"></audio>
+  <audio id="sound-wrong" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_10cb5b6b8d.mp3?filename=wrong-2-46090.mp3"></audio>
+
+  <script>
+    const characters = ['🐶', '🐱', '🐵', '🦊', '🐸', '🦄', '🐷', '🐻', '🐯', '🐼'];
+    let num1, num2, correctAnswer, score = 0, timeLeft = 60, timerInterval, correctCount = 0;
+    let highscore = localStorage.getItem('highscore') || 0;
+
+    const questionEl = document.getElementById('question');
+    const answerEl = document.getElementById('answer');
+    const characterEl = document.getElementById('character');
+    const feedbackEl = document.getElementById('feedback');
+    const scoreEl = document.getElementById('score');
+    const correctsEl = document.getElementById('corrects');
+    const highscoreEl = document.getElementById('highscore');
+    const timerEl = document.getElementById('timer');
+    const cardEl = document.getElementById('card');
+    const soundCorrect = document.getElementById('sound-correct');
+    const soundWrong = document.getElementById('sound-wrong');
+
+    highscoreEl.innerText = `🏆 Récord: ${highscore}`;
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function newQuestion() {
+      num1 = getRandomInt(1, 10);
+      num2 = getRandomInt(1, 10);
+      correctAnswer = num1 * num2;
+      questionEl.innerText = `¿Cuánto es ${num1} × ${num2}?`;
+      characterEl.innerText = characters[getRandomInt(0, characters.length - 1)];
+      answerEl.value = '';
+      feedbackEl.innerText = '';
+    }
+
+    function checkAnswer() {
+      if (timeLeft <= 0) return;
+      const userAnswer = parseInt(answerEl.value);
+      if (userAnswer === correctAnswer) {
+        score += 5;
+        correctCount++;
+        scoreEl.innerText = `Puntos: ${score}`;
+        correctsEl.innerText = `✔️ Aciertos: ${correctCount}`;
+        feedbackEl.innerText = '✅ ¡Muy bien!';
+        feedbackEl.style.color = '#00bb00';
+        soundCorrect.currentTime = 0;
+        soundCorrect.play();
+        cardEl.classList.add('correct');
+
+        if (score > highscore) {
+          highscore = score;
+          localStorage.setItem('highscore', highscore);
+          highscoreEl.innerText = `🏆 Récord: ${highscore}`;
+        }
+
+        setTimeout(() => {
+          cardEl.classList.remove('correct');
+          newQuestion();
+        }, 500);
+      } else {
+        feedbackEl.innerText = '❌ Ups, inténtalo otra vez';
+        feedbackEl.style.color = '#ff0000';
+        soundWrong.currentTime = 0;
+        soundWrong.play();
+      }
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      timerEl.innerText = `⏱️ Tiempo: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        feedbackEl.innerText = `⏰ ¡Tiempo terminado! Aciertos: ${correctCount}, Puntos: ${score}`;
+        feedbackEl.style.color = '#000';
+        answerEl.disabled = true;
+      }
+    }
+
+    function startGame() {
+      score = 0;
+      correctCount = 0;
+      timeLeft = 60;
+      answerEl.disabled = false;
+      timerEl.innerText = `⏱️ Tiempo: ${timeLeft}s`;
+      scoreEl.innerText = `Puntos: 0`;
+      correctsEl.innerText = `✔️ Aciertos: 0`;
+      feedbackEl.innerText = '';
+      newQuestion();
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
